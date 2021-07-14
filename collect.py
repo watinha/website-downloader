@@ -5,16 +5,30 @@ from appium import webdriver
 
 ind = -1 if len(sys.argv) < 2 else int(sys.argv[1])
 
-def collect (url):
-    desired_capabilities = {
-        "platformName": "Android",
-        "deviceName": "pixel",
-        "browserName": "Chrome",
-        "automationName": "UiAutomator2",
-        "nativeWebScreenshot": True
-    }
+if len(sys.argv) < 3:
+    sys.stderr('there should be another argument: desktop/mobile\n')
+    sys.exit(1)
 
-    driver = webdriver.Remote('http://host.docker.internal:4723/wd/hub', desired_capabilities)
+mode = sys.argv[2]
+
+def get_driver (mode):
+    if mode == 'mobile':
+        desired_capabilities = {
+            "platformName": "Android",
+            "deviceName": "pixel",
+            "browserName": "Chrome",
+            "automationName": "UiAutomator2",
+            "nativeWebScreenshot": True
+        }
+        return webdriver.Remote('http://host.docker.internal:4723/wd/hub', desired_capabilities)
+    if mode == 'desktop':
+        desired_capabilities = {
+            "browserName": "Chrome",
+        }
+        return webdriver.Remote('http://host.docker.internal:4444/wd/hub', desired_capabilities)
+
+def collect (url):
+    driver = get_driver(mode)
     driver.get(url)
 
     sleep(10)
@@ -51,7 +65,7 @@ for idx, url in enumerate([ url.rstrip() for url in urls ]):
 
         html = collect(url)
 
-        folder = './static/%d' % (idx)
+        folder = './%s/%d' % (mode, idx)
         if not os.path.exists(folder):
             os.mkdir(folder)
 
